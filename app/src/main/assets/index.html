@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>SafeChat</title>
     <script src="crypto-js.min.js"></script>
     <style>
@@ -20,63 +19,85 @@
             --border: rgba(255, 255, 255, 0.08);
             --danger: #ef4444;
             --green: #4fae4e;
-            --quote-bar: #2aabee;
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background: var(--bg-main); color: var(--text-primary); height: 100vh; overflow: hidden; display: flex; }
 
-        /* Авторизация */
+        .svg-icon { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; vertical-align: middle; }
+        .svg-icon svg { width: 100%; height: 100%; }
+
+        /* Вход */
         #auth-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(25px); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
         .auth-card { background: var(--bg-sidebar); border-radius: 26px; padding: 32px 24px; width: 100%; max-width: 340px; text-align: center; border: 1px solid var(--border); box-shadow: 0 25px 50px rgba(0,0,0,0.7); }
-        .auth-logo { width: 68px; height: 68px; background: linear-gradient(135deg, #2aabee, #1d6ed8); border-radius: 22px; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; font-size: 34px; box-shadow: 0 10px 25px rgba(42,171,238,0.35); }
+        .auth-logo { width: 68px; height: 68px; background: linear-gradient(135deg, #2aabee, #1d6ed8); border-radius: 22px; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 25px rgba(42,171,238,0.35); }
+        .auth-logo svg { width: 34px; height: 34px; fill: #fff; }
         .auth-card h2 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
         .auth-tabs { display: flex; gap: 8px; margin: 20px 0; background: var(--bg-main); padding: 4px; border-radius: 14px; }
-        .auth-tab { flex: 1; padding: 10px; border: none; background: none; color: var(--text-secondary); font-size: 14px; font-weight: 600; border-radius: 10px; cursor: pointer; transition: 0.2s; }
-        .auth-tab.active { background: var(--accent); color: #fff; box-shadow: 0 2px 8px rgba(42,171,238,0.3); }
+        .auth-tab { flex: 1; padding: 10px; border: none; background: none; color: var(--text-secondary); font-size: 14px; font-weight: 600; border-radius: 10px; cursor: pointer; }
+        .auth-tab.active { background: var(--accent); color: #fff; }
         .auth-card input { width: 100%; padding: 14px 16px; background: var(--bg-main); border: 1px solid var(--border); border-radius: 14px; color: #fff; margin-bottom: 12px; font-size: 15px; outline: none; }
-        .auth-card input:focus { border-color: var(--accent); }
         .btn-submit { width: 100%; padding: 14px; background: var(--accent); border: none; border-radius: 14px; color: #fff; font-size: 16px; font-weight: 600; cursor: pointer; }
 
-        /* Модальные окна */
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(15px); display: none; align-items: center; justify-content: center; z-index: 500; padding: 20px; }
-        .modal-box { background: var(--bg-sidebar); border-radius: 22px; padding: 24px; width: 100%; max-width: 320px; text-align: center; border: 1px solid var(--border); box-shadow: 0 20px 40px rgba(0,0,0,0.6); }
-        .modal-box h3 { margin-bottom: 14px; font-size: 18px; font-weight: 700; }
+        /* Боковое меню Telegram (Drawer) */
+        #drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); z-index: 2000; display: none; }
+        #drawer { position: fixed; left: 0; top: 0; bottom: 0; width: 290px; background: var(--bg-sidebar); z-index: 2001; transform: translateX(-100%); transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1); display: flex; flex-direction: column; box-shadow: 10px 0 30px rgba(0,0,0,0.6); }
+        #drawer.open { transform: translateX(0); }
+        .drawer-header { padding: 30px 20px 20px; background: linear-gradient(135deg, #1d3248, #17212b); border-bottom: 1px solid var(--border); }
+        .drawer-avatar { width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #2aabee, #1d6ed8); display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 700; color: #fff; margin-bottom: 12px; cursor: pointer; }
+        .drawer-name { font-size: 18px; font-weight: 700; }
+        .drawer-bio { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+        .drawer-menu { flex: 1; padding: 12px 0; overflow-y: auto; }
+        .drawer-item { display: flex; align-items: center; gap: 16px; padding: 14px 22px; font-size: 15px; font-weight: 500; cursor: pointer; color: #fff; }
+        .drawer-item:active { background: var(--bg-active); }
+        .drawer-item svg { width: 22px; height: 22px; stroke: var(--text-secondary); }
+
+        /* Модалка профиля */
+        #profile-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(20px); z-index: 2500; display: none; align-items: center; justify-content: center; padding: 20px; }
+        .profile-card { background: var(--bg-sidebar); border-radius: 26px; padding: 30px 20px; width: 100%; max-width: 330px; text-align: center; border: 1px solid var(--border); }
+        .profile-card .avatar { width: 84px; height: 84px; border-radius: 50%; background: linear-gradient(135deg, #2aabee, #1d6ed8); margin: 0 auto 14px; font-size: 38px; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+        .profile-input-group { text-align: left; margin: 16px 0; }
+        .profile-input-group label { font-size: 11px; text-transform: uppercase; color: var(--accent); font-weight: 700; margin-bottom: 6px; display: block; }
+        .profile-input-group input { width: 100%; padding: 12px 14px; background: var(--bg-main); border: 1px solid var(--border); border-radius: 12px; color: #fff; font-size: 14px; outline: none; }
+
+        /* Модалки */
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(15px); display: none; align-items: center; justify-content: center; z-index: 2200; padding: 20px; }
+        .modal-box { background: var(--bg-sidebar); border-radius: 22px; padding: 24px; width: 100%; max-width: 320px; text-align: center; border: 1px solid var(--border); }
         .modal-box input { width: 100%; padding: 12px 14px; background: var(--bg-main); border: 1px solid var(--border); border-radius: 12px; color: #fff; margin-bottom: 12px; font-size: 14px; outline: none; }
         .modal-btns { display: flex; gap: 10px; margin-top: 10px; }
         .btn-cancel { flex: 1; padding: 12px; background: rgba(255,255,255,0.08); border: none; border-radius: 12px; color: #fff; cursor: pointer; }
         .btn-confirm { flex: 1; padding: 12px; background: var(--accent); border: none; border-radius: 12px; color: #fff; font-weight: 600; cursor: pointer; }
 
-        /* Полноэкранный оверлей звонка iOS */
-        #call-overlay { position: fixed; inset: 0; background: rgba(14, 22, 33, 0.96); backdrop-filter: blur(30px); z-index: 4000; display: none; flex-direction: column; align-items: center; justify-content: space-between; padding: 60px 20px 40px; }
-        .call-user-avatar { width: 110px; height: 110px; border-radius: 50%; background: linear-gradient(135deg, #2aabee, #1d6ed8); display: flex; align-items: center; justify-content: center; font-size: 48px; font-weight: 700; color: #fff; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .call-user-name { font-size: 26px; font-weight: 700; margin-top: 18px; }
-        .call-status { font-size: 15px; color: var(--accent); margin-top: 6px; }
+        /* Звонки WebRTC */
+        #call-overlay { position: fixed; inset: 0; background: rgba(14, 22, 33, 0.98); backdrop-filter: blur(35px); z-index: 4000; display: none; flex-direction: column; align-items: center; justify-content: space-between; padding: 60px 20px 40px; }
+        .call-user-avatar { width: 110px; height: 110px; border-radius: 50%; background: linear-gradient(135deg, #2aabee, #1d6ed8); display: flex; align-items: center; justify-content: center; font-size: 48px; font-weight: 700; color: #fff; }
         .call-controls { display: flex; gap: 30px; align-items: center; }
-        .btn-call-action { width: 68px; height: 68px; border-radius: 50%; border: none; font-size: 26px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
-        .btn-call-end { background: var(--danger); color: #fff; }
-        .btn-call-accept { background: var(--green); color: #fff; }
-        .btn-call-mute { background: rgba(255,255,255,0.15); color: #fff; }
+        .btn-call-action { width: 68px; height: 68px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .btn-call-action svg { width: 30px; height: 30px; fill: #fff; }
+        .btn-call-end { background: var(--danger); }
+        .btn-call-accept { background: var(--green); }
 
         /* Главный экран */
         #app { display: none; width: 100vw; height: 100vh; position: relative; overflow: hidden; }
 
-        /* Список чатов */
+        /* Боковая панель */
         #sidebar { width: 380px; background: var(--bg-sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; height: 100%; z-index: 1; position: absolute; left: 0; top: 0; bottom: 0; transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1); }
-        .sidebar-header { padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
-        .header-title-box { display: flex; align-items: center; gap: 10px; }
-        .my-avatar { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #2aabee, #1d6ed8); display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; color: #fff; }
-        .user-pill { font-weight: 700; font-size: 16px; }
-        .header-btns { display: flex; gap: 8px; align-items: center; }
-        .btn-circle { background: rgba(255,255,255,0.06); color: var(--accent); border: none; width: 36px; height: 36px; border-radius: 50%; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .sidebar-header { padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+        .btn-icon-nav { background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 6px; display: flex; align-items: center; justify-content: center; }
+        .btn-icon-nav svg { width: 22px; height: 22px; stroke: var(--text-secondary); }
 
-        .search-box { padding: 10px 14px; border-bottom: 1px solid var(--border); }
-        .search-box input { width: 100%; padding: 10px 14px; background: var(--bg-main); border: 1px solid var(--border); border-radius: 20px; color: #fff; font-size: 14px; outline: none; }
+        .search-box { padding: 8px 14px; border-bottom: 1px solid var(--border); position: relative; }
+        .search-box input { width: 100%; padding: 10px 14px 10px 38px; background: var(--bg-main); border: 1px solid var(--border); border-radius: 20px; color: #fff; font-size: 14px; outline: none; }
+        .search-icon-svg { position: absolute; left: 26px; top: 17px; width: 16px; height: 16px; stroke: var(--text-secondary); pointer-events: none; }
+
+        .archive-item { display: flex; align-items: center; gap: 14px; padding: 12px 16px; cursor: pointer; background: rgba(42,171,238,0.06); border-bottom: 1px solid var(--border); }
+        .archive-icon { width: 48px; height: 48px; border-radius: 50%; background: #243547; color: var(--accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .archive-icon svg { width: 24px; height: 24px; stroke: var(--accent); }
 
         .chat-list { flex: 1; overflow-y: auto; }
         .chat-item { display: flex; align-items: center; gap: 14px; padding: 12px 16px; cursor: pointer; border-bottom: 1px solid var(--border); transition: background 0.15s; }
         .chat-item:active, .chat-item.active { background: var(--bg-active); }
-        .avatar-box { position: relative; width: 50px; height: 50px; flex-shrink: 0; }
-        .avatar { width: 100%; height: 100%; border-radius: 50%; background: linear-gradient(135deg, #2aabee, #1d6ed8); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; color: #fff; }
+        .avatar-box { position: relative; width: 48px; height: 48px; flex-shrink: 0; }
+        .avatar { width: 100%; height: 100%; border-radius: 50%; background: linear-gradient(135deg, #2aabee, #1d6ed8); display: flex; align-items: center; justify-content: center; font-size: 19px; font-weight: 700; color: #fff; }
         .online-dot { position: absolute; bottom: 1px; right: 1px; width: 12px; height: 12px; background: var(--green); border: 2px solid var(--bg-sidebar); border-radius: 50%; display: none; }
         .online-dot.active { display: block; }
         .chat-info { flex: 1; min-width: 0; }
@@ -85,76 +106,53 @@
         .chat-time { font-size: 12px; color: var(--text-secondary); }
         .chat-preview { font-size: 13px; color: var(--text-secondary); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        /* Окно диалога */
+        /* Окно сообщений */
         #chat-window { position: absolute; inset: 0; background: var(--bg-main); background-image: radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px); background-size: 24px 24px; display: flex; flex-direction: column; z-index: 2; transform: translateX(100%); transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1); }
         .chat-header { padding: 10px 16px; background: rgba(23, 33, 43, 0.96); backdrop-filter: blur(25px); display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
-        .chat-header-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
-        .btn-back { background: none; border: none; color: var(--accent); font-size: 28px; cursor: pointer; line-height: 1; padding-right: 4px; }
-        .chat-title { font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .chat-header-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+        .btn-back-chevron { background: none; border: none; color: var(--accent); cursor: pointer; padding: 4px; display: flex; align-items: center; }
+        .btn-back-chevron svg { width: 24px; height: 24px; stroke: var(--accent); }
+        .chat-title { font-size: 16px; font-weight: 600; }
         .chat-status { font-size: 12px; color: var(--text-secondary); }
         .chat-status.online { color: var(--green); }
-        .btn-call { background: none; border: none; color: var(--accent); font-size: 22px; cursor: pointer; padding: 6px; }
+        .btn-call-header { background: none; border: none; color: var(--accent); cursor: pointer; padding: 6px; display: flex; align-items: center; }
+        .btn-call-header svg { width: 22px; height: 22px; fill: var(--accent); }
 
         #messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 8px; }
-        .msg-row { display: flex; width: 100%; position: relative; }
+        .msg-row { display: flex; width: 100%; position: relative; animation: msgPop 0.18s cubic-bezier(0.32, 0.72, 0, 1); }
         .msg-row.my { justify-content: flex-end; }
         .msg-row.other { justify-content: flex-start; }
-        .bubble { max-width: 78%; padding: 8px 12px; border-radius: 18px; font-size: 15px; line-height: 1.42; word-break: break-word; box-shadow: 0 1px 2px rgba(0,0,0,0.25); cursor: pointer; }
+        .bubble { max-width: 78%; padding: 8px 12px; border-radius: 18px; font-size: 15px; line-height: 1.42; word-break: break-word; box-shadow: 0 1px 2px rgba(0,0,0,0.25); cursor: pointer; position: relative; }
         .msg-row.my .bubble { background: var(--bubble-out); color: #fff; border-bottom-right-radius: 4px; }
         .msg-row.other .bubble { background: var(--bubble-in); color: var(--text-primary); border-bottom-left-radius: 4px; }
-        .group-sender-name { font-size: 12px; font-weight: 700; color: #38bdf8; margin-bottom: 3px; }
 
-        /* Плашка ответа (цитата) внутри пузыря */
-        .reply-quote-box { background: rgba(0,0,0,0.2); border-left: 3px solid var(--quote-bar); border-radius: 4px; padding: 4px 8px; margin-bottom: 6px; font-size: 12px; }
-        .reply-quote-sender { font-weight: 700; color: var(--accent); }
-        .reply-quote-text { color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .reactions-badge { display: flex; gap: 4px; margin-top: 4px; flex-wrap: wrap; }
+        .reaction-chip { background: rgba(0,0,0,0.3); border-radius: 10px; padding: 2px 6px; font-size: 12px; border: 1px solid rgba(255,255,255,0.1); }
 
-        .msg-meta { font-size: 10px; opacity: 0.7; margin-top: 4px; display: flex; justify-content: flex-end; gap: 4px; align-items: center; }
+        #reaction-bar { position: fixed; background: rgba(23, 33, 43, 0.98); backdrop-filter: blur(25px); border-radius: 30px; padding: 6px 12px; display: none; gap: 8px; z-index: 3100; box-shadow: 0 10px 30px rgba(0,0,0,0.7); border: 1px solid var(--border); animation: msgPop 0.15s ease; }
+        .reaction-btn { font-size: 22px; background: none; border: none; cursor: pointer; transition: transform 0.15s; }
+        .reaction-btn:active { transform: scale(1.3); }
 
-        /* Медиа и Голосовые */
-        .bubble img { max-width: 100%; max-height: 320px; border-radius: 12px; margin-top: 4px; display: block; }
-        .bubble video { max-width: 100%; border-radius: 12px; margin-top: 4px; display: block; }
-
-        /* Плеер голосовых сообщений Telegram */
-        .voice-card { display: flex; align-items: center; gap: 10px; padding: 4px 2px; width: 220px; }
-        .voice-play-btn { width: 38px; height: 38px; border-radius: 50%; background: var(--accent); color: #fff; border: none; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .voice-body { flex: 1; display: flex; flex-direction: column; gap: 4px; }
-        .voice-waves { display: flex; align-items: center; gap: 2px; height: 18px; }
-        .voice-wave-bar { flex: 1; background: rgba(255,255,255,0.3); border-radius: 2px; }
-        .voice-meta { display: flex; justify-content: space-between; font-size: 11px; opacity: 0.7; }
-        .btn-speed { background: rgba(255,255,255,0.15); border: none; color: #fff; font-size: 10px; font-weight: 700; padding: 2px 5px; border-radius: 4px; cursor: pointer; }
-
-        /* Плашка ответа над полем ввода */
+        /* Ввод */
         #reply-bar { background: var(--bg-sidebar); border-top: 1px solid var(--border); padding: 8px 14px; display: none; align-items: center; justify-content: space-between; }
-        .reply-bar-content { border-left: 3px solid var(--quote-bar); padding-left: 8px; flex: 1; }
-        .reply-bar-title { font-size: 12px; font-weight: 700; color: var(--accent); }
-        .reply-bar-text { font-size: 12px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px; }
-        .btn-reply-close { background: none; border: none; color: var(--text-secondary); font-size: 18px; cursor: pointer; }
-
-        /* Панель ввода */
+        .reply-bar-content { border-left: 3px solid var(--accent); padding-left: 8px; flex: 1; }
         .input-bar { padding: 8px 12px; background: rgba(23, 33, 43, 0.98); backdrop-filter: blur(25px); display: flex; gap: 8px; align-items: center; border-top: 1px solid var(--border); }
         .input-bar input { flex: 1; padding: 10px 16px; background: var(--bg-main); border: 1px solid var(--border); border-radius: 20px; color: #fff; font-size: 15px; outline: none; }
-        .btn-action { background: none; border: none; color: var(--text-secondary); font-size: 22px; width: 38px; height: 38px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .btn-send { background: var(--accent); color: #fff; border: none; width: 38px; height: 38px; border-radius: 50%; font-size: 17px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .btn-input-icon { background: none; border: none; color: var(--text-secondary); width: 38px; height: 38px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .btn-input-icon svg { width: 22px; height: 22px; stroke: var(--text-secondary); }
+        .btn-send { background: var(--accent); color: #fff; border: none; width: 38px; height: 38px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .btn-send svg { width: 18px; height: 18px; fill: #fff; margin-left: 2px; }
 
-        /* Панель живой записи голосового Telegram */
         #recording-bar { display: none; flex: 1; align-items: center; gap: 10px; color: #fff; }
         .rec-dot { width: 10px; height: 10px; background: var(--danger); border-radius: 50%; animation: pulse 0.7s infinite alternate; }
-        .rec-timer { font-size: 14px; font-weight: 600; font-family: monospace; }
-        .rec-cancel { color: var(--danger); font-size: 13px; font-weight: 600; cursor: pointer; margin-left: auto; padding: 4px 8px; }
 
-        /* Контекстное меню */
-        #msg-context-menu { position: fixed; background: rgba(23, 33, 43, 0.96); backdrop-filter: blur(20px); border: 1px solid var(--border); border-radius: 14px; padding: 6px; display: none; flex-direction: column; z-index: 3000; box-shadow: 0 10px 30px rgba(0,0,0,0.6); min-width: 160px; }
-        .context-item { padding: 10px 14px; font-size: 14px; border: none; background: none; color: #fff; text-align: left; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 10px; }
-        .context-item:active { background: var(--bg-active); }
-        .context-item.danger { color: var(--danger); }
-
+        @keyframes msgPop { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } }
         @keyframes pulse { from { opacity: 0.2; } to { opacity: 1; } }
 
         @media (min-width: 769px) {
             #sidebar { width: 380px; position: static; transform: none !important; }
             #chat-window { position: static; transform: none !important; flex: 1; }
-            .btn-back { display: none; }
+            .btn-back-chevron { display: none; }
         }
         @media (max-width: 768px) {
             #sidebar { width: 100%; }
@@ -166,10 +164,12 @@
 <body>
     <audio id="remoteAudio" autoplay></audio>
 
-    <!-- Авторизация -->
+    <!-- Вход -->
     <div id="auth-modal">
         <div class="auth-card">
-            <div class="auth-logo">🛡️</div>
+            <div class="auth-logo">
+                <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
+            </div>
             <h2>SafeChat</h2>
             <div class="auth-tabs">
                 <button class="auth-tab active" id="tab-login" onclick="setAuthMode('login')">Вход</button>
@@ -181,7 +181,65 @@
         </div>
     </div>
 
-    <!-- Модалка: Личный диалог -->
+    <!-- Боковое меню Telegram (Drawer) -->
+    <div id="drawer-overlay" onclick="toggleDrawer(false)"></div>
+    <div id="drawer">
+        <div class="drawer-header">
+            <div class="drawer-avatar" id="drawer-avatar" onclick="openProfile()">?</div>
+            <div class="drawer-name" id="drawer-name">Пользователь</div>
+            <div class="drawer-bio" id="drawer-bio">О себе...</div>
+        </div>
+        <div class="drawer-menu">
+            <div class="drawer-item" onclick="openProfile()">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                Мой профиль
+            </div>
+            <div class="drawer-item" onclick="showArchive()">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg>
+                Архив чатов
+            </div>
+            <div class="drawer-item" onclick="openModal('new-group-modal')">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                Создать группу
+            </div>
+            <div class="drawer-item" onclick="openModal('new-chat-modal')">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                Новый диалог
+            </div>
+            <div class="drawer-item" onclick="logout()">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                Выйти
+            </div>
+        </div>
+    </div>
+
+    <!-- Модалка Профиля -->
+    <div id="profile-modal">
+        <div class="profile-card">
+            <div class="avatar" id="profile-avatar">?</div>
+            <h3 id="profile-title">@user</h3>
+            <div class="profile-input-group">
+                <label>О себе (Bio)</label>
+                <input type="text" id="profile-bio-input" placeholder="Расскажите о себе...">
+            </div>
+            <div class="modal-btns">
+                <button class="btn-cancel" onclick="closeProfile()">Закрыть</button>
+                <button class="btn-confirm" onclick="saveBio()">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Быстрые реакции эмодзи -->
+    <div id="reaction-bar">
+        <button class="reaction-btn" onclick="sendReaction('👍')">👍</button>
+        <button class="reaction-btn" onclick="sendReaction('❤️')">❤️</button>
+        <button class="reaction-btn" onclick="sendReaction('🔥')">🔥</button>
+        <button class="reaction-btn" onclick="sendReaction('😂')">😂</button>
+        <button class="reaction-btn" onclick="sendReaction('😮')">😮</button>
+        <button class="reaction-btn" onclick="sendReaction('👏')">👏</button>
+    </div>
+
+    <!-- Модалки создания чатов -->
     <div id="new-chat-modal" class="modal">
         <div class="modal-box">
             <h3>Личный диалог</h3>
@@ -193,12 +251,11 @@
         </div>
     </div>
 
-    <!-- Модалка: Групповой чат -->
     <div id="new-group-modal" class="modal">
         <div class="modal-box">
             <h3>Создать группу</h3>
             <input type="text" id="group-title" placeholder="Название группы...">
-            <input type="text" id="group-members" placeholder="Логины через запятую (alex, john)..." autocapitalize="none">
+            <input type="text" id="group-members" placeholder="Логины через запятую..." autocapitalize="none">
             <div class="modal-btns">
                 <button class="btn-cancel" onclick="closeModal('new-group-modal')">Отмена</button>
                 <button class="btn-confirm" onclick="confirmNewGroup()">Создать</button>
@@ -206,101 +263,101 @@
         </div>
     </div>
 
-    <!-- Экран аудиозвонка iOS -->
+    <!-- Звонки WebRTC -->
     <div id="call-overlay">
         <div style="display:flex; flex-direction:column; align-items:center;">
             <div class="call-user-avatar" id="call-avatar">?</div>
-            <div class="call-user-name" id="call-name">Собеседник</div>
-            <div class="call-status" id="call-status-label">Вызов...</div>
+            <div style="font-size:24px; font-weight:700; margin-top:16px;" id="call-name">Собеседник</div>
+            <div style="font-size:14px; color:var(--accent); margin-top:6px;" id="call-status-label">Вызов...</div>
         </div>
         <div class="call-controls">
-            <button class="btn-call-action btn-call-mute" id="btn-mute" onclick="toggleMuteCall()">🎙️</button>
-            <button class="btn-call-action btn-call-end" onclick="endCall()">📞</button>
-            <button class="btn-call-action btn-call-accept" id="btn-accept" style="display:none;" onclick="acceptIncomingCall()">📞</button>
+            <button class="btn-call-action btn-call-end" onclick="endCall()">
+                <svg viewBox="0 0 24 24"><path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08a.99.99 0 0 1 0-1.41C3.28 8.77 7.42 7 12 7s8.72 1.77 11.71 4.67c.39.39.39 1.02 0 1.41l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.1-.7-.28-.79-.74-1.69-1.36-2.67-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/></svg>
+            </button>
+            <button class="btn-call-action btn-call-accept" id="btn-accept" style="display:none;" onclick="acceptCall()">
+                <svg viewBox="0 0 24 24"><path d="M6.62 10.79a15.053 15.053 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.45.57 3.57a1 1 0 01-.25 1.02l-2.2 2.2z"/></svg>
+            </button>
         </div>
     </div>
 
-    <!-- Контекстное меню сообщения -->
-    <div id="msg-context-menu">
-        <button class="context-item" onclick="replyToContextMsg()">↩️ Ответить</button>
-        <button class="context-item" onclick="copyContextMsg()">📋 Копировать</button>
-        <button class="context-item danger" onclick="deleteContextMsg()">🗑️ Удалить для всех</button>
-    </div>
-
+    <!-- Главный экран -->
     <div id="app">
-        <!-- Список диалогов -->
         <div id="sidebar">
             <div class="sidebar-header">
-                <div class="header-title-box">
-                    <div class="my-avatar" id="my-avatar-letter">?</div>
-                    <span class="user-pill" id="my-label"></span>
-                    <button class="btn-circle" onclick="logout()" title="Выйти">🚪</button>
-                </div>
-                <div class="header-btns">
-                    <button class="btn-circle" onclick="openModal('new-group-modal')" title="Создать группу">👥</button>
-                    <button class="btn-circle" onclick="openModal('new-chat-modal')" title="Новый диалог">✏️</button>
-                </div>
+                <button class="btn-icon-nav" onclick="toggleDrawer(true)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                </button>
+                <span style="font-weight:700; font-size:17px;">SafeChat</span>
+                <button class="btn-icon-nav" onclick="openModal('new-chat-modal')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                </button>
             </div>
             <div class="search-box">
-                <input type="text" placeholder="Поиск по чатам..." oninput="filterChats(this.value)">
+                <svg class="search-icon-svg" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="text" placeholder="Поиск по диалогам..." oninput="filterChats(this.value)">
             </div>
             <div class="chat-list" id="chat-list"></div>
         </div>
 
-        <!-- Окно чата -->
         <div id="chat-window">
             <div class="chat-header">
                 <div class="chat-header-left">
-                    <button class="btn-back" onclick="closeChat()">‹</button>
+                    <button class="btn-back-chevron" onclick="closeChat()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    </button>
                     <div>
                         <div class="chat-title" id="current-chat-title">Чат</div>
                         <div class="chat-status" id="current-chat-status">сквозное шифрование</div>
                     </div>
                 </div>
-                <button class="btn-call" id="btn-start-call" onclick="startCall()" title="Позвонить">📞</button>
+                <button class="btn-call-header" id="btn-start-call" onclick="startCall()">
+                    <svg viewBox="0 0 24 24"><path d="M6.62 10.79a15.053 15.053 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.45.57 3.57a1 1 0 01-.25 1.02l-2.2 2.2z"/></svg>
+                </button>
             </div>
 
             <div id="messages"></div>
 
-            <!-- Плашка ответа (Quote) -->
             <div id="reply-bar">
                 <div class="reply-bar-content">
-                    <div class="reply-bar-title" id="reply-bar-sender">В ответ на</div>
-                    <div class="reply-bar-text" id="reply-bar-text">Текст сообщения</div>
+                    <div style="font-size:12px; font-weight:700; color:var(--accent);" id="reply-bar-sender">В ответ на</div>
+                    <div style="font-size:12px; color:var(--text-secondary);" id="reply-bar-text">Текст...</div>
                 </div>
-                <button class="btn-reply-close" onclick="cancelReply()">✕</button>
+                <button style="background:none; border:none; color:var(--text-secondary); font-size:16px; cursor:pointer;" onclick="cancelReply()">✕</button>
             </div>
 
-            <!-- Панель ввода -->
             <div class="input-bar">
                 <input type="file" id="file-input" style="display:none;" accept="image/*,video/*" onchange="handleFile(this)">
-                <button class="btn-action" onclick="document.getElementById('file-input').click()" title="Фото/Видео">📎</button>
+                <button class="btn-input-icon" onclick="document.getElementById('file-input').click()" title="Прикрепить">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+                </button>
 
-                <!-- Обычный ввод текста -->
                 <div id="text-input-wrap" style="flex:1; display:flex;">
-                    <input type="text" id="msg-input" placeholder="Сообщение..." oninput="handleTyping()" onkeydown="if(event.key==='Enter') sendText()">
+                    <input type="text" id="msg-input" placeholder="Сообщение..." onkeydown="if(event.key==='Enter') sendText()">
                 </div>
 
-                <!-- Режим живой записи голосового Telegram -->
                 <div id="recording-bar">
                     <div class="rec-dot"></div>
-                    <div class="rec-timer" id="rec-timer">0:00</div>
-                    <div class="rec-cancel" onclick="cancelVoiceRecord()">Отмена</div>
+                    <div style="font-size:14px; font-weight:600; font-family:monospace;" id="rec-timer">0:00</div>
+                    <div style="color:var(--danger); font-size:13px; font-weight:600; cursor:pointer; margin-left:auto; padding:4px;" onclick="cancelVoiceRecord()">Отмена</div>
                 </div>
 
-                <button class="btn-action" id="record-btn" onclick="toggleVoiceRecord()" title="Голосовое">🎙️</button>
-                <button class="btn-send" onclick="sendText()">➤</button>
+                <button class="btn-input-icon" id="record-btn" onclick="toggleVoiceRecord()" title="Голосовое">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+                </button>
+                <button class="btn-send" onclick="sendText()">
+                    <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                </button>
             </div>
         </div>
     </div>
 
     <script>
-        let ws, myUser = '', myPassHash = '', activeChatId = '', activeTitle = '', isCurrentGroup = false, authMode = 'login';
-        let allChats = [], replyingMsg = null, contextMsg = null;
+        let ws, myUser = '', myPassHash = '', myBio = 'В сети SafeChat', activeChatId = '', activeTitle = '', isCurrentGroup = false, authMode = 'login';
+        let allChats = [], archivedChatIds = new Set(JSON.parse(localStorage.getItem('safechat_archived') || '[]'));
+        let isShowingArchive = false, replyingMsg = null, targetMsgIdForReaction = null;
         let mediaRecorder, audioChunks = [], isRecording = false, recSeconds = 0, recInterval = null;
 
-        // WebRTC переменные для аудиозвонка
-        let peerConnection = null, localStream = null, isCalling = false, callPartner = '';
+        let peerConnection = null, localStream = null, callPartner = '';
         const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
         function setAuthMode(mode) {
@@ -323,7 +380,7 @@
         function submitAuth() {
             const username = document.getElementById('username').value.trim().toLowerCase();
             const password = document.getElementById('password').value.trim();
-            if (!username || !password) return alert('Заполните логин и пароль!');
+            if (!username || !password) return alert('Заполните поля!');
             const passHash = CryptoJS.SHA256(username + ":" + password).toString();
             connectWS(username, passHash, authMode, false);
         }
@@ -340,17 +397,23 @@
                 if (data.type === 'auth_success') {
                     myUser = data.username;
                     myPassHash = data.passHash;
+                    myBio = data.bio || 'В сети SafeChat';
                     localStorage.setItem('safechat_session', JSON.stringify({ username: myUser, passHash: myPassHash }));
+
                     document.getElementById('auth-modal').style.display = 'none';
                     document.getElementById('app').style.display = 'flex';
-                    document.getElementById('my-label').innerText = '@' + myUser;
-                    document.getElementById('my-avatar-letter').innerText = myUser.charAt(0).toUpperCase();
+                    document.getElementById('drawer-name').innerText = '@' + myUser;
+                    document.getElementById('drawer-bio').innerText = myBio;
+                    document.getElementById('drawer-avatar').innerText = myUser.charAt(0).toUpperCase();
                 } else if (data.type === 'auth_error') {
                     if (isAuto) localStorage.removeItem('safechat_session');
                     else alert(data.message);
+                } else if (data.type === 'bio_updated') {
+                    myBio = data.bio;
+                    document.getElementById('drawer-bio').innerText = myBio;
                 } else if (data.type === 'chat_list') {
                     allChats = data.chats;
-                    renderChats(allChats);
+                    renderChats();
                 } else if (data.type === 'open_chat') {
                     openChat(data.chatId, data.title, data.isGroup, data.online);
                 } else if (data.type === 'history') {
@@ -362,6 +425,8 @@
                 } else if (data.type === 'new_msg') {
                     if (data.message.chatId === activeChatId) appendMessage(data.message);
                     if (data.message.sender !== myUser) playChime();
+                } else if (data.type === 'msg_reaction') {
+                    updateMsgReactions(data.msgId, data.reactions);
                 } else if (data.type === 'msg_deleted') {
                     const el = document.getElementById('msg-' + data.msgId);
                     if (el) el.remove();
@@ -373,10 +438,66 @@
             };
         }
 
-        function renderChats(chats) {
+        // Drawer
+        function toggleDrawer(open) {
+            const d = document.getElementById('drawer');
+            const o = document.getElementById('drawer-overlay');
+            if (open) { d.classList.add('open'); o.style.display = 'block'; }
+            else { d.classList.remove('open'); o.style.display = 'none'; }
+        }
+
+        function openProfile() {
+            toggleDrawer(false);
+            document.getElementById('profile-title').innerText = '@' + myUser;
+            document.getElementById('profile-avatar').innerText = myUser.charAt(0).toUpperCase();
+            document.getElementById('profile-bio-input').value = myBio;
+            document.getElementById('profile-modal').style.display = 'flex';
+        }
+        function closeProfile() { document.getElementById('profile-modal').style.display = 'none'; }
+        function saveBio() {
+            const bio = document.getElementById('profile-bio-input').value.trim();
+            ws.send(JSON.stringify({ type: 'update_bio', bio }));
+            closeProfile();
+        }
+
+        // Архив
+        function showArchive() {
+            toggleDrawer(false);
+            isShowingArchive = !isShowingArchive;
+            renderChats();
+        }
+
+        function toggleArchiveChat(chatId) {
+            if (archivedChatIds.has(chatId)) archivedChatIds.delete(chatId);
+            else archivedChatIds.add(chatId);
+            localStorage.setItem('safechat_archived', JSON.stringify(Array.from(archivedChatIds)));
+            renderChats();
+        }
+
+        function renderChats(filtered = null) {
             const list = document.getElementById('chat-list');
             list.innerHTML = '';
-            chats.forEach(chat => {
+
+            let chats = filtered || allChats;
+            let displayChats = chats.filter(c => isShowingArchive ? archivedChatIds.has(c.chatId) : !archivedChatIds.has(c.chatId));
+
+            if (!isShowingArchive && archivedChatIds.size > 0) {
+                const archDiv = document.createElement('div');
+                archDiv.className = 'archive-item';
+                archDiv.onclick = () => showArchive();
+                archDiv.innerHTML = `
+                    <div class="archive-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg>
+                    </div>
+                    <div class="chat-info">
+                        <div class="chat-name">Архив чатов</div>
+                        <div class="chat-preview">${archivedChatIds.size} чатов</div>
+                    </div>
+                `;
+                list.appendChild(archDiv);
+            }
+
+            displayChats.forEach(chat => {
                 const div = document.createElement('div');
                 div.className = 'chat-item' + (chat.chatId === activeChatId ? ' active' : '');
                 div.onclick = () => openChat(chat.chatId, chat.title, chat.isGroup, chat.online);
@@ -397,13 +518,18 @@
             });
         }
 
+        function filterChats(q) {
+            if (!q) return renderChats();
+            renderChats(allChats.filter(c => c.title.toLowerCase().includes(q.toLowerCase())));
+        }
+
         function openChat(chatId, title, isGroup, online) {
             activeChatId = chatId;
             activeTitle = title;
             isCurrentGroup = isGroup;
             document.body.classList.add('in-chat');
             document.getElementById('current-chat-title').innerText = (isGroup ? '👥 ' : '') + title;
-            document.getElementById('btn-start-call').style.display = isGroup ? 'none' : 'block';
+            document.getElementById('btn-start-call').style.display = isGroup ? 'none' : 'flex';
             updateStatus(isGroup, online);
             cancelReply();
             ws.send(JSON.stringify({ type: 'get_history', chatId }));
@@ -421,22 +547,20 @@
             else { st.innerText = 'был(а) недавно'; st.classList.remove('online'); }
         }
 
-        // ================= ОТВЕТЫ НА СООБЩЕНИЯ (REPLY) =================
-        function replyToContextMsg() {
-            if (!contextMsg) return;
-            replyingMsg = { id: contextMsg.id, sender: contextMsg.sender, text: contextMsg.text };
-            document.getElementById('reply-bar-sender').innerText = 'В ответ на @' + contextMsg.sender;
-            document.getElementById('reply-bar-text').innerText = contextMsg.text;
+        // Ответы
+        function replyToMsg(id, sender, text) {
+            replyingMsg = { id, sender, text };
+            document.getElementById('reply-bar-sender').innerText = 'В ответ на @' + sender;
+            document.getElementById('reply-bar-text').innerText = text;
             document.getElementById('reply-bar').style.display = 'flex';
             document.getElementById('msg-input').focus();
         }
-
         function cancelReply() {
             replyingMsg = null;
             document.getElementById('reply-bar').style.display = 'none';
         }
 
-        // ================= СООБЩЕНИЯ И МЕДИА =================
+        // Сообщения
         function renderMessages(msgs) {
             const box = document.getElementById('messages');
             box.innerHTML = '';
@@ -462,38 +586,70 @@
             let replyHtml = '';
             if (msg.replyTo) {
                 replyHtml = `
-                    <div class="reply-quote-box">
-                        <div class="reply-quote-sender">@${escapeHtml(msg.replyTo.sender)}</div>
-                        <div class="reply-quote-text">${escapeHtml(msg.replyTo.text)}</div>
+                    <div style="background:rgba(0,0,0,0.25); border-left:3px solid var(--accent); border-radius:4px; padding:4px 8px; margin-bottom:6px; font-size:12px;">
+                        <div style="font-weight:700; color:var(--accent);">@${escapeHtml(msg.replyTo.sender)}</div>
+                        <div style="color:var(--text-secondary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(msg.replyTo.text)}</div>
                     </div>
                 `;
             }
 
-            let senderNameHtml = (isCurrentGroup && !isMy) ? `<div class="group-sender-name">@${escapeHtml(msg.sender)}</div>` : '';
+            let rBadgeHtml = '';
+            if (msg.reactions && Object.keys(msg.reactions).length > 0) {
+                const emojis = Object.values(msg.reactions).join(' ');
+                rBadgeHtml = `<div class="reactions-badge"><span class="reaction-chip">${emojis}</span></div>`;
+            }
 
             row.innerHTML = `
-                <div class="bubble" onclick="openMsgMenu(event, '${msg.id}', '${escapeAttr(payload.content || '')}', '${msg.sender}')">
-                    ${senderNameHtml}
+                <div class="bubble" onclick="showReactions(event, '${msg.id}', '${msg.sender}', '${escapeAttr(payload.content || '')}')">
+                    ${(isCurrentGroup && !isMy) ? `<div style="font-size:12px; font-weight:700; color:#38bdf8; margin-bottom:3px;">@${escapeHtml(msg.sender)}</div>` : ''}
                     ${replyHtml}
                     ${contentHtml}
-                    <div class="msg-meta"><span>${msg.time}</span> ${isMy ? '<span>✓✓</span>' : ''}</div>
+                    <div style="font-size:10px; opacity:0.7; margin-top:4px; display:flex; justify-content:flex-end; gap:4px; align-items:center;">
+                        <span>${msg.time}</span>
+                        ${isMy ? `<svg viewBox="0 0 18 12" width="14" height="10" fill="none" stroke="#2AABEE" stroke-width="2" stroke-linecap="round"><path d="M1 6l4 4L14 1"></path><path d="M5 6l4 4L17 1"></path></svg>` : ''}
+                    </div>
+                    ${rBadgeHtml}
                 </div>
             `;
             box.appendChild(row);
             box.scrollTop = box.scrollHeight;
         }
 
+        // Реакции
+        function showReactions(e, msgId, sender, text) {
+            e.stopPropagation();
+            targetMsgIdForReaction = msgId;
+            const bar = document.getElementById('reaction-bar');
+            bar.style.display = 'flex';
+            bar.style.left = Math.min(e.clientX || 50, window.innerWidth - 220) + 'px';
+            bar.style.top = Math.max((e.clientY || 100) - 50, 60) + 'px';
+        }
+        window.addEventListener('click', () => document.getElementById('reaction-bar').style.display = 'none');
+
+        function sendReaction(emoji) {
+            if (targetMsgIdForReaction) {
+                ws.send(JSON.stringify({ type: 'reaction', msgId: targetMsgIdForReaction, emoji }));
+            }
+        }
+
+        function updateMsgReactions(msgId, reactions) {
+            const row = document.getElementById('msg-' + msgId);
+            if (row) {
+                let badge = row.querySelector('.reactions-badge');
+                if (!badge) {
+                    badge = document.createElement('div');
+                    badge.className = 'reactions-badge';
+                    row.querySelector('.bubble').appendChild(badge);
+                }
+                badge.innerHTML = `<span class="reaction-chip">${Object.values(reactions).join(' ')}</span>`;
+            }
+        }
+
         function sendPayload(payload) {
             if (!activeChatId) return;
             const ciphertext = encrypt(payload, activeChatId + "_secret_key");
             const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            ws.send(JSON.stringify({
-                type: 'msg',
-                chatId: activeChatId,
-                ciphertext,
-                time,
-                replyTo: replyingMsg
-            }));
+            ws.send(JSON.stringify({ type: 'msg', chatId: activeChatId, ciphertext, time, replyTo: replyingMsg }));
             cancelReply();
         }
 
@@ -505,7 +661,19 @@
             input.value = '';
         }
 
-        // ================= ГОЛОСОВЫЕ СООБЩЕНИЯ TELEGRAM =================
+        function handleFile(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const isVideo = file.type.startsWith('video');
+                sendPayload({ type: isVideo ? 'video' : 'image', content: e.target.result });
+            };
+            reader.readAsDataURL(file);
+            input.value = '';
+        }
+
+        // Голосовые
         async function toggleVoiceRecord() {
             if (!isRecording) {
                 try {
@@ -513,15 +681,13 @@
                     mediaRecorder = new MediaRecorder(stream);
                     audioChunks = [];
                     recSeconds = 0;
-
                     document.getElementById('text-input-wrap').style.display = 'none';
                     document.getElementById('recording-bar').style.display = 'flex';
                     document.getElementById('record-btn').style.color = 'var(--danger)';
 
                     recInterval = setInterval(() => {
                         recSeconds++;
-                        const m = Math.floor(recSeconds / 60);
-                        const s = recSeconds % 60;
+                        const m = Math.floor(recSeconds / 60); const s = recSeconds % 60;
                         document.getElementById('rec-timer').innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
                     }, 1000);
 
@@ -535,7 +701,6 @@
                         }
                         stream.getTracks().forEach(t => t.stop());
                     };
-
                     mediaRecorder.start();
                     isRecording = true;
                 } catch(e) { alert('Микрофон недоступен'); }
@@ -544,65 +709,43 @@
                 mediaRecorder.stop();
             }
         }
-
         function cancelVoiceRecord() {
-            if (isRecording) {
-                audioChunks = [];
-                stopRecordUI();
-                mediaRecorder.stop();
-            }
+            if (isRecording) { audioChunks = []; stopRecordUI(); mediaRecorder.stop(); }
         }
-
         function stopRecordUI() {
-            clearInterval(recInterval);
-            isRecording = false;
+            clearInterval(recInterval); isRecording = false;
             document.getElementById('recording-bar').style.display = 'none';
             document.getElementById('text-input-wrap').style.display = 'flex';
             document.getElementById('record-btn').style.color = 'var(--text-secondary)';
         }
-
         function createVoiceHtml(src, dur) {
             const uid = 'v_' + Math.random().toString(36).substr(2, 6);
             return `
-                <div class="voice-card">
-                    <button class="voice-play-btn" id="btn-${uid}" onclick="playVoice('${uid}', '${src}')">▶</button>
-                    <div class="voice-body">
-                        <div class="voice-waves">
-                            ${[8,14,6,18,12,16,10,14,18,8,12,16,10,14].map(h => `<div class="voice-wave-bar" style="height:${h}px"></div>`).join('')}
+                <div style="display:flex; align-items:center; gap:10px; width:220px; padding:2px;">
+                    <button style="width:36px; height:36px; border-radius:50%; background:var(--accent); color:#fff; border:none; cursor:pointer;" id="btn-${uid}" onclick="playVoice('${uid}', '${src}')">▶</button>
+                    <div style="flex:1; display:flex; flex-direction:column; gap:4px;">
+                        <div style="display:flex; align-items:center; gap:2px; height:18px;">
+                            ${[8,14,6,18,12,16,10,14,18,8,12,16,10,14].map(h => `<div style="flex:1; background:rgba(255,255,255,0.3); border-radius:2px; height:${h}px;"></div>`).join('')}
                         </div>
-                        <div class="voice-meta">
-                            <span id="dur-${uid}">${dur}</span>
-                            <button class="btn-speed" onclick="speedVoice('${uid}')">1X</button>
-                        </div>
+                        <div style="font-size:11px; opacity:0.7;">${dur}</div>
                     </div>
                 </div>
             `;
         }
-
         let activeVoiceAudio = null;
         function playVoice(uid, src) {
             if (activeVoiceAudio && !activeVoiceAudio.paused) {
-                activeVoiceAudio.pause();
-                activeVoiceAudio = null;
-                document.querySelectorAll('.voice-play-btn').forEach(b => b.innerText = '▶');
+                activeVoiceAudio.pause(); activeVoiceAudio = null;
+                document.querySelectorAll('button[id^="btn-v_"]').forEach(b => b.innerText = '▶');
                 return;
             }
-            const a = new Audio(src);
-            activeVoiceAudio = a;
-            const btn = document.getElementById('btn-' + uid);
-            btn.innerText = '⏸';
+            const a = new Audio(src); activeVoiceAudio = a;
+            document.getElementById('btn-' + uid).innerText = '⏸';
             a.play();
-            a.onended = () => { btn.innerText = '▶'; activeVoiceAudio = null; };
+            a.onended = () => { document.getElementById('btn-' + uid).innerText = '▶'; activeVoiceAudio = null; };
         }
 
-        function speedVoice(uid) {
-            if (activeVoiceAudio) {
-                activeVoiceAudio.playbackRate = activeVoiceAudio.playbackRate === 1 ? 2 : 1;
-                event.target.innerText = activeVoiceAudio.playbackRate + 'X';
-            }
-        }
-
-        // ================= АУДИОЗВОНКИ (WebRTC) =================
+        // WebRTC Звонки
         async function startCall() {
             if (isCurrentGroup) return;
             callPartner = activeTitle;
@@ -618,13 +761,11 @@
 
             peerConnection.ontrack = e => {
                 document.getElementById('remoteAudio').srcObject = e.streams[0];
-                document.getElementById('call-status-label').innerText = 'Разговор 00:01';
+                document.getElementById('call-status-label').innerText = 'Разговор';
             };
-
             peerConnection.onicecandidate = e => {
                 if (e.candidate) ws.send(JSON.stringify({ type: 'call_signal', sub: 'ice', to: callPartner, candidate: e.candidate }));
             };
-
             const offer = await peerConnection.createOffer();
             await peerConnection.setLocalDescription(offer);
             ws.send(JSON.stringify({ type: 'call_signal', sub: 'offer', to: callPartner, sdp: offer }));
@@ -635,7 +776,7 @@
                 callPartner = data.from;
                 document.getElementById('call-name').innerText = '@' + callPartner;
                 document.getElementById('call-avatar').innerText = callPartner.charAt(0).toUpperCase();
-                document.getElementById('call-status-label').innerText = 'Входящий аудиозвонок...';
+                document.getElementById('call-status-label').innerText = 'Входящий звонок...';
                 document.getElementById('btn-accept').style.display = 'flex';
                 document.getElementById('call-overlay').style.display = 'flex';
 
@@ -655,12 +796,11 @@
             }
         }
 
-        async function acceptIncomingCall() {
+        async function acceptCall() {
             document.getElementById('btn-accept').style.display = 'none';
             document.getElementById('call-status-label').innerText = 'Соединение...';
             localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
             localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
-
             const answer = await peerConnection.createAnswer();
             await peerConnection.setLocalDescription(answer);
             ws.send(JSON.stringify({ type: 'call_signal', sub: 'answer', to: callPartner, sdp: answer }));
@@ -678,16 +818,13 @@
             document.getElementById('call-overlay').style.display = 'none';
         }
 
-        // ================= ГРУППЫ И ДИАЛОГИ =================
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-
         function confirmNewChat() {
-            const target = document.getElementById('target-user').value.trim();
-            if (target) ws.send(JSON.stringify({ type: 'create_chat', targetUser: target }));
+            const t = document.getElementById('target-user').value.trim();
+            if (t) ws.send(JSON.stringify({ type: 'create_chat', targetUser: t }));
             closeModal('new-chat-modal');
         }
-
         function confirmNewGroup() {
             const title = document.getElementById('group-title').value.trim();
             const members = document.getElementById('group-members').value.split(',').map(s => s.trim()).filter(Boolean);
@@ -696,21 +833,6 @@
                 closeModal('new-group-modal');
             }
         }
-
-        // ================= ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =================
-        function openMsgMenu(e, id, text, sender) {
-            e.preventDefault();
-            e.stopPropagation();
-            contextMsg = { id, text, sender };
-            const m = document.getElementById('msg-context-menu');
-            m.style.display = 'flex';
-            m.style.left = Math.min(e.clientX || 50, window.innerWidth - 180) + 'px';
-            m.style.top = Math.min(e.clientY || 100, window.innerHeight - 140) + 'px';
-        }
-        window.addEventListener('click', () => document.getElementById('msg-context-menu').style.display = 'none');
-
-        function copyContextMsg() { if (contextMsg) navigator.clipboard.writeText(contextMsg.text); }
-        function deleteContextMsg() { if (contextMsg) ws.send(JSON.stringify({ type: 'delete_msg', msgId: contextMsg.id })); }
 
         function encrypt(data, key) { return CryptoJS.AES.encrypt(JSON.stringify(data), key).toString(); }
         function decrypt(cipher, key) {
