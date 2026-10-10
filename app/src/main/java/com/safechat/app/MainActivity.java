@@ -1,55 +1,91 @@
 package com.safechat.app;
 
+import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.TextView;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.WebSocket;
-import okhttp3.WebSocketListener;
+import android.webkit.PermissionRequest;
+import android.webkit.ValueCallback;
+import android.webkit.WebChromeClient;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 
 public class MainActivity extends Activity {
-    private WebSocket webSocket;
-    private TextView messagesView;
-    private EditText inputView;
+    private WebView webView;
+    private ValueCallback<Uri[]> uploadMessage;
+    private final static int FILE_CHOOSER_RESULT_CODE = 100;
 
+    @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
 
-        messagesView = findViewById(R.id.messagesView);
-        inputView = findViewById(R.id.inputView);
-        Button sendButton = findViewById(R.id.sendButton);
+        // Запрашиваем доступ к микрофону на устройстве
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, 101);
+            }
+        }
 
-        startWebSocket();
+        webView = new WebView(this);
+        setContentView(webView);
 
-        sendButton.setOnClickListener(v -> {
-            String text = inputView.getText().toString().trim();
-            if (!text.isEmpty() && webSocket != null) {
-                webSocket.send("{\"type\":\"msg\",\"chatId\":\"general\",\"ciphertext\":\"" + text + "\",\"time\":\"now\"}");
-                messagesView.append("\nВы: " + text);
-                inputView.setText("");
+        WebSettings s = webView.getSettings();
+        s.setJavaScriptEnabled(true);
+        s.setDomStorageEnabled(true);
+        s.setDatabaseEnabled(true);
+        s.setAllowFileAccess(true);
+        s.setAllowContentAccess(true);
+        s.setMediaPlaybackRequiresUserGesture(false);
+
+        webView.setWebViewClient(new WebViewClient());
+        webView.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public void onPermissionRequest(final PermissionRequest request) {
+                request.grant(request.getResources());
+            }
+
+            @Override
+            public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, FileChooserParams fileChooserParams) {
+                if (uploadMessage != null) uploadMessage.onReceiveValue(null);
+                uploadMessage = filePathCallback;
+                Intent i = fileChooserParams.createIntent();
+                try {
+                    startActivityForResult(i, FILE_CHOOSER_RESULT_CODE);
+                } catch (Exception e) {
+                    uploadMessage = null;
+                    return false;
+                }
+                return true;
             }
         });
+
+        // Загружаем интерфейс прямо из памяти приложения
+        webView.loadUrl("file:///android_asset/index.html");
     }
 
-    private void startWebSocket() {
-        OkHttpClient client = new OkHttpClient();
-        Request request = new Request.Builder().url("ws://2.56.118.10").build();
-        webSocket = client.newWebSocket(request, new WebSocketListener() {
-            @Override
-            public void onOpen(WebSocket webSocket, Response response) {
-                runOnUiThread(() -> messagesView.append("Подключено к серверу SafeChat\n"));
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == FILE_CHOOSER_RESULT_CODE) {
+            if (uploadMessage != null) {
+                uploadMessage.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(resultCode, data));
+                uploadMessage = null;
             }
+        }
+    }
 
-            @Override
-            public void onMessage(WebSocket webSocket, String text) {
-                runOnUiThread(() -> messagesView.append("\nСообщение: " + text));
-            }
-        });
+    @Override
+    public void onBackPressed() {
+        if (webView.canGoBack()) {
+            webView.goBack();
+        } else {
+            super.onBackPressed();
+        }
     }
 }
