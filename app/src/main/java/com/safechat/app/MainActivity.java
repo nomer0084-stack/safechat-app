@@ -1,17 +1,17 @@
 package com.safechat.app;
 
+import android.app.Activity;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
-import androidx.appcompat.app.AppCompatActivity;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends Activity {
     private WebSocket webSocket;
     private TextView messagesView;
     private EditText inputView;
