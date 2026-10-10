@@ -19,7 +19,6 @@
             --blurple-hover: #4752c4;
             --green: #23a55a;
             --danger: #f23f43;
-            --warning: #f59e0b;
             --text-normal: #dbdee1;
             --text-muted: #949ba4;
             --text-header: #f2f3f5;
@@ -85,13 +84,12 @@
         .user-details { flex: 1; min-width: 0; }
         .user-name { font-size: 13px; font-weight: 700; color: var(--text-header); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .user-tag { font-size: 11px; color: var(--text-muted); }
-        .user-actions { display: flex; gap: 2px; }
         .user-action-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 6px; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
         .user-action-btn:hover { background: rgba(255,255,255,0.06); color: var(--text-normal); }
         .user-action-btn svg { width: 18px; height: 18px; fill: currentColor; }
 
-        /* 3. Основная область чата / стрима */
-        #main-chat-area { flex: 1; background: var(--bg-chat); display: flex; flex-direction: column; overflow: hidden; }
+        /* 3. Главная область чата / стрима */
+        #main-chat-area { flex: 1; background: var(--bg-chat); display: flex; flex-direction: column; overflow: hidden; position: relative; }
         .chat-top-header { height: 48px; padding: 0 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(0,0,0,0.2); }
         .chat-top-title { display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--text-header); font-size: 15px; }
 
@@ -114,24 +112,67 @@
         .input-btn:hover { color: var(--text-header); }
         .input-btn svg { width: 20px; height: 20px; fill: currentColor; }
 
-        /* ОБЛАСТЬ СТРИМА ЭКРАНА (120 FPS / Low-Latency) */
+        /* ОБЛАСТЬ СТРИМА ЭКРАНА */
         #voice-stream-view { display: none; flex: 1; flex-direction: column; background: #000; position: relative; }
         .stream-video-container { flex: 1; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
         #screen-video-player { width: 100%; height: 100%; object-fit: contain; }
 
-        /* Плашка мониторинга задержки и FPS */
-        .stream-watermark { position: absolute; top: 12px; left: 16px; background: rgba(0,0,0,0.75); backdrop-filter: blur(8px); padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 10px; border: 1px solid rgba(255,255,255,0.1); }
-        .live-dot { width: 8px; height: 8px; background: var(--green); border-radius: 50%; box-shadow: 0 0 8px var(--green); }
-        .latency-text { color: var(--accent); font-family: monospace; font-size: 13px; }
+        /* НАСТРАИВАЕМАЯ ПАНЕЛЬ СТАТИСТИКИ (SafeChat Stream HUD) */
+        #stream-hud {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            background: rgba(14, 16, 20, 0.88);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 10px;
+            padding: 10px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            z-index: 100;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+            cursor: move;
+            min-width: 170px;
+        }
 
-        /* Панель управления стримом: FPS + Минимальная задержка + Запуск */
-        .voice-controls-bar { height: 74px; background: var(--bg-server); display: flex; align-items: center; justify-content: center; gap: 14px; padding: 0 16px; flex-wrap: wrap; }
+        .hud-header { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 6px; margin-bottom: 2px; }
+        .hud-title { font-size: 11px; font-weight: 800; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px; }
+        .hud-live-dot { width: 7px; height: 7px; background: var(--green); border-radius: 50%; box-shadow: 0 0 8px var(--green); }
+        .hud-settings-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 2px; display: flex; align-items: center; }
+        .hud-settings-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; }
+
+        .hud-stat-row { display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-family: monospace; }
+        .hud-label { color: var(--text-muted); }
+        .hud-val { font-weight: 700; color: #fff; }
+        .hud-val.ping { color: #4ade80; }
+        .hud-val.fps { color: #38bdf8; }
+
+        /* Всплывающее меню переключения элементов оверлея */
+        #hud-settings-popup {
+            position: absolute;
+            top: 40px;
+            right: 0;
+            background: var(--bg-channels);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 8px;
+            padding: 8px 12px;
+            display: none;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 12px;
+            z-index: 110;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            min-width: 160px;
+        }
+        .hud-toggle-item { display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text-normal); }
+        .hud-toggle-item input { accent-color: var(--blurple); }
+
+        /* Панель управления стримом */
+        .voice-controls-bar { height: 70px; background: var(--bg-server); display: flex; align-items: center; justify-content: center; gap: 14px; padding: 0 16px; flex-wrap: wrap; }
         .fps-select-wrap { display: flex; align-items: center; gap: 6px; background: var(--bg-channels); padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); font-size: 13px; font-weight: 600; color: var(--text-normal); }
         .fps-select-wrap select { background: none; border: none; color: var(--blurple); font-weight: 700; font-size: 13px; outline: none; cursor: pointer; }
         .fps-select-wrap select option { background: var(--bg-server); color: #fff; }
-
-        .latency-toggle-wrap { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--text-normal); cursor: pointer; }
-        .latency-toggle-wrap input { width: 16px; height: 16px; accent-color: var(--green); cursor: pointer; }
 
         .stream-ctrl-btn { height: 42px; padding: 0 16px; border-radius: 8px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; color: #fff; transition: 0.15s; }
         .stream-ctrl-btn svg { width: 18px; height: 18px; fill: currentColor; }
@@ -237,37 +278,63 @@
             </div>
         </div>
 
-        <!-- СТРИМ ЭКРАНА С ВЫБОРОМ ГЕРЦОВКИ (30/60/120/144/MAX) И ЗАДЕРЖКОЙ -->
+        <!-- СТРИМ ЭКРАНА С ПЛАВАЮЩЕЙ ПАНЕЛЬЮ HUD -->
         <div id="voice-stream-view">
             <div class="stream-video-container">
                 <video id="screen-video-player" autoplay playsinline></video>
-                <div class="stream-watermark">
-                    <div class="live-dot"></div>
-                    <span id="stream-status-label">ПРЯМОЙ ЭФИР</span>
-                    <span>•</span>
-                    <span class="latency-text" id="latency-display">Задержка: ~16 ms</span>
-                    <span>•</span>
-                    <span id="fps-display" style="color:#38bdf8;">120 FPS</span>
+
+                <!-- ПЛАВАЮЩАЯ ПАНЕЛЬ СТАТИСТИКИ (SafeChat HUD) -->
+                <div id="stream-hud">
+                    <div class="hud-header">
+                        <div class="hud-title">
+                            <div class="hud-live-dot"></div>
+                            <span id="hud-title-text">SafeChat</span>
+                        </div>
+                        <button class="hud-settings-btn" onclick="toggleHudSettings(event)">
+                            <svg viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                        </button>
+                    </div>
+
+                    <!-- Всплывающее меню настройки видимости параметров -->
+                    <div id="hud-settings-popup">
+                        <label class="hud-toggle-item"><input type="checkbox" id="cfg-show-ping" checked onchange="updateHudVisibility()"> Задержка</label>
+                        <label class="hud-toggle-item"><input type="checkbox" id="cfg-show-fps" checked onchange="updateHudVisibility()"> Герцовка (FPS)</label>
+                        <label class="hud-toggle-item"><input type="checkbox" id="cfg-show-res" checked onchange="updateHudVisibility()"> Разрешение</label>
+                        <label class="hud-toggle-item"><input type="checkbox" id="cfg-show-bitrate" checked onchange="updateHudVisibility()"> Битрейт</label>
+                    </div>
+
+                    <!-- Строки параметров -->
+                    <div class="hud-stat-row" id="hud-row-ping">
+                        <span class="hud-label">Задержка:</span>
+                        <span class="hud-val ping" id="hud-val-ping">16 ms</span>
+                    </div>
+                    <div class="hud-stat-row" id="hud-row-fps">
+                        <span class="hud-label">Герцовка:</span>
+                        <span class="hud-val fps" id="hud-val-fps">120 FPS</span>
+                    </div>
+                    <div class="hud-stat-row" id="hud-row-res">
+                        <span class="hud-label">Качество:</span>
+                        <span class="hud-val" id="hud-val-res">1080p</span>
+                    </div>
+                    <div class="hud-stat-row" id="hud-row-bitrate">
+                        <span class="hud-label">Битрейт:</span>
+                        <span class="hud-val" id="hud-val-bitrate">8.2 Mbps</span>
+                    </div>
                 </div>
             </div>
 
-            <!-- Панель управления: выбор FPS, минимальная задержка и трансляция -->
+            <!-- Нижняя панель управления -->
             <div class="voice-controls-bar">
                 <div class="fps-select-wrap">
-                    <span>Частота:</span>
+                    <span>FPS:</span>
                     <select id="fps-selector" onchange="updateFpsConfig()">
-                        <option value="30">30 FPS</option>
-                        <option value="60">60 FPS</option>
-                        <option value="120" selected>120 FPS</option>
-                        <option value="144">144 FPS</option>
-                        <option value="240">Без лимита</option>
+                        <option value="30">30</option>
+                        <option value="60">60</option>
+                        <option value="120" selected>120</option>
+                        <option value="144">144</option>
+                        <option value="240">MAX</option>
                     </select>
                 </div>
-
-                <label class="latency-toggle-wrap" title="Отключает буферизацию пакетов для мгновенного отклика">
-                    <input type="checkbox" id="low-latency-mode" checked onchange="toggleLowLatencyMode()">
-                    <span>Минимальная задержка</span>
-                </label>
 
                 <button class="stream-ctrl-btn btn-screenshare" onclick="toggleScreenShare()">
                     <svg viewBox="0 0 24 24"><path d="M20 18c1.1 0 1.99-.9 1.99-2L22 6c0-1.11-.9-2-2-2H4c-1.11 0-2 .89-2 2v10c0 1.1.89 2 2 2H0v2h24v-2h-4zM4 6h16v10H4V6z"/></svg>
@@ -285,8 +352,8 @@
     <script>
         const SECRET_KEY = "safechat_discord_e2ee_key_v1";
         let ws, myUser = '', currentChannel = 'general', currentVoiceRoom = null;
-        let localScreenStream = null, peerConnection = null, latencyTimer = null;
-        let targetFps = 120, isLowLatency = true;
+        let localScreenStream = null, peerConnection = null, hudStatsInterval = null;
+        let targetFps = 120, prevBytes = 0, prevTimestamp = 0;
         const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
         function encrypt(text) {
@@ -302,6 +369,7 @@
         }
 
         window.addEventListener('DOMContentLoaded', () => {
+            makeHudDraggable();
             const saved = localStorage.getItem('safechat_discord_user');
             if (saved) {
                 myUser = saved;
@@ -333,13 +401,10 @@
 
             ws.onmessage = async (event) => {
                 const data = JSON.parse(event.data);
-                if (data.type === 'channel_history') {
-                    renderHistory(data.messages);
-                } else if (data.type === 'new_chat_msg') {
+                if (data.type === 'channel_history') renderHistory(data.messages);
+                else if (data.type === 'new_chat_msg') {
                     if (data.msg.channel === currentChannel) appendMessage(data.msg);
-                } else if (data.type === 'rtc_signal') {
-                    handleRtcSignal(data);
-                }
+                } else if (data.type === 'rtc_signal') handleRtcSignal(data);
             };
         }
 
@@ -396,45 +461,102 @@
             input.value = '';
         }
 
-        function mobileBackToChannels() {
-            document.body.classList.remove('in-channel');
+        function mobileBackToChannels() { document.body.classList.remove('in-channel'); }
+
+        // ================= НАСТРОЙКИ И МОНИТОРИНГ ОВЕРЛЕЯ HUD =================
+        function toggleHudSettings(e) {
+            e.stopPropagation();
+            const p = document.getElementById('hud-settings-popup');
+            p.style.display = p.style.display === 'flex' ? 'none' : 'flex';
+        }
+        window.addEventListener('click', () => {
+            const p = document.getElementById('hud-settings-popup');
+            if (p) p.style.display = 'none';
+        });
+
+        function updateHudVisibility() {
+            document.getElementById('hud-row-ping').style.display = document.getElementById('cfg-show-ping').checked ? 'flex' : 'none';
+            document.getElementById('hud-row-fps').style.display = document.getElementById('cfg-show-fps').checked ? 'flex' : 'none';
+            document.getElementById('hud-row-res').style.display = document.getElementById('cfg-show-res').checked ? 'flex' : 'none';
+            document.getElementById('hud-row-bitrate').style.display = document.getElementById('cfg-show-bitrate').checked ? 'flex' : 'none';
         }
 
-        // ================= УПРАВЛЕНИЕ ГЕРЦОВКОЙ (FPS) И ЗАДЕРЖКОЙ =================
-        function updateFpsConfig() {
-            targetFps = parseInt(document.getElementById('fps-selector').value) || 120;
-            document.getElementById('fps-display').innerText = (targetFps === 240 ? 'MAX' : targetFps) + ' FPS';
-            // Если трансляция уже идёт — динамически переключаем частоту
-            if (localScreenStream) {
-                const track = localScreenStream.getVideoTracks()[0];
-                if (track) {
-                    track.applyConstraints({ frameRate: { ideal: targetFps, max: targetFps } });
+        function startHudMonitoring() {
+            clearInterval(hudStatsInterval);
+            hudStatsInterval = setInterval(async () => {
+                const vid = document.getElementById('screen-video-player');
+                if (vid && vid.videoWidth) {
+                    document.getElementById('hud-val-res').innerText = `${vid.videoWidth}x${vid.videoHeight}`;
                 }
-            }
-        }
 
-        function toggleLowLatencyMode() {
-            isLowLatency = document.getElementById('low-latency-mode').checked;
-        }
-
-        // Мониторинг задержки в реальном времени через getStats
-        function startLatencyMonitor() {
-            clearInterval(latencyTimer);
-            latencyTimer = setInterval(async () => {
                 if (peerConnection) {
                     try {
                         const stats = await peerConnection.getStats();
                         stats.forEach(report => {
-                            if (report.type === 'candidate-pair' && report.state === 'succeeded') {
-                                if (report.currentRoundTripTime !== undefined) {
-                                    const ms = Math.round(report.currentRoundTripTime * 1000);
-                                    document.getElementById('latency-display').innerText = `Задержка: ${ms} ms`;
+                            if (report.type === 'candidate-pair' && report.state === 'succeeded' && report.currentRoundTripTime !== undefined) {
+                                const ms = Math.round(report.currentRoundTripTime * 1000);
+                                document.getElementById('hud-val-ping').innerText = `${ms} ms`;
+                            }
+                            if ((report.type === 'inbound-rtp' || report.type === 'outbound-rtp') && report.kind === 'video') {
+                                if (report.framesPerSecond !== undefined) {
+                                    document.getElementById('hud-val-fps').innerText = `${Math.round(report.framesPerSecond)} FPS`;
                                 }
+                                const bytes = report.bytesReceived || report.bytesSent || 0;
+                                const now = report.timestamp;
+                                if (prevTimestamp && bytes > prevBytes) {
+                                    const mbps = ((bytes - prevBytes) * 8 / ((now - prevTimestamp) / 1000) / 1000000).toFixed(1);
+                                    document.getElementById('hud-val-bitrate').innerText = `${mbps} Mbps`;
+                                }
+                                prevBytes = bytes;
+                                prevTimestamp = now;
                             }
                         });
                     } catch(e) {}
                 }
             }, 1000);
+        }
+
+        // Перетаскивание панели оверлея
+        function makeHudDraggable() {
+            const hud = document.getElementById('stream-hud');
+            let isDragging = false, startX, startY, initX, initY;
+
+            const onStart = (e) => {
+                if (e.target.closest('#hud-settings-popup') || e.target.closest('.hud-settings-btn')) return;
+                isDragging = true;
+                const p = e.touches ? e.touches[0] : e;
+                startX = p.clientX; startY = p.clientY;
+                const rect = hud.getBoundingClientRect();
+                initX = rect.left; initY = rect.top;
+            };
+
+            const onMove = (e) => {
+                if (!isDragging) return;
+                const p = e.touches ? e.touches[0] : e;
+                const dx = p.clientX - startX;
+                const dy = p.clientY - startY;
+                hud.style.left = (initX + dx) + 'px';
+                hud.style.top = (initY + dy) + 'px';
+                hud.style.right = 'auto';
+            };
+
+            const onEnd = () => { isDragging = false; };
+
+            hud.addEventListener('mousedown', onStart);
+            window.addEventListener('mousemove', onMove);
+            window.addEventListener('mouseup', onEnd);
+            hud.addEventListener('touchstart', onStart, { passive: true });
+            window.addEventListener('touchmove', onMove, { passive: true });
+            window.addEventListener('touchend', onEnd);
+        }
+
+        function updateFpsConfig() {
+            targetFps = parseInt(document.getElementById('fps-selector').value) || 120;
+            document.getElementById('hud-val-fps').innerText = `${targetFps} FPS`;
+            if (localScreenStream) {
+                const track = localScreenStream.getVideoTracks()[0];
+                if (track) track.applyConstraints({ frameRate: { ideal: targetFps, max: targetFps } });
+            }
         }
 
         // ================= СТРИМ ЭКРАНА =================
@@ -455,7 +577,7 @@
         }
 
         function leaveVoiceStreamRoom() {
-            clearInterval(latencyTimer);
+            clearInterval(hudStatsInterval);
             if (localScreenStream) {
                 localScreenStream.getTracks().forEach(t => t.stop());
                 localScreenStream = null;
@@ -472,26 +594,16 @@
         async function toggleScreenShare() {
             try {
                 updateFpsConfig();
-
-                // Захватываем экран с выбранной частотой (30/60/120/144/240)
                 localScreenStream = await navigator.mediaDevices.getDisplayMedia({
-                    video: {
-                        cursor: "always",
-                        frameRate: { ideal: targetFps, max: targetFps },
-                        width: { ideal: 1920 },
-                        height: { ideal: 1080 }
-                    },
+                    video: { cursor: "always", frameRate: { ideal: targetFps, max: targetFps }, width: { ideal: 1920 }, height: { ideal: 1080 } },
                     audio: true
                 });
 
                 document.getElementById('screen-video-player').srcObject = localScreenStream;
-                document.getElementById('stream-status-label').innerText = 'ВЫ ТРАНСЛИРУЕТЕ (' + targetFps + ' FPS)';
-
                 peerConnection = new RTCPeerConnection(rtcConfig);
                 localScreenStream.getTracks().forEach(track => {
                     const sender = peerConnection.addTrack(track, localScreenStream);
-                    // Принудительный режим минимальной задержки конвейера
-                    if (isLowLatency && sender.setParameters) {
+                    if (sender.setParameters) {
                         const params = sender.getParameters();
                         params.degradationPreference = 'maintain-framerate';
                         sender.setParameters(params);
@@ -506,7 +618,7 @@
                 await peerConnection.setLocalDescription(offer);
                 ws.send(JSON.stringify({ type: 'rtc_signal', sub: 'offer', sdp: offer }));
 
-                startLatencyMonitor();
+                startHudMonitoring();
                 localScreenStream.getVideoTracks()[0].onended = () => leaveVoiceStreamRoom();
             } catch (e) {
                 alert('Не удалось начать трансляцию');
@@ -519,11 +631,7 @@
                 peerConnection.ontrack = e => {
                     const player = document.getElementById('screen-video-player');
                     player.srcObject = e.streams[0];
-                    // Отключение буферизации воспроизведения для минимального лага
-                    if (e.receiver && 'playoutDelayHint' in e.receiver) {
-                        e.receiver.playoutDelayHint = 0;
-                    }
-                    document.getElementById('stream-status-label').innerText = 'СТРИМ @' + data.from;
+                    if (e.receiver && 'playoutDelayHint' in e.receiver) e.receiver.playoutDelayHint = 0;
                 };
                 peerConnection.onicecandidate = e => {
                     if (e.candidate) ws.send(JSON.stringify({ type: 'rtc_signal', sub: 'ice', candidate: e.candidate }));
@@ -532,8 +640,7 @@
                 const answer = await peerConnection.createAnswer();
                 await peerConnection.setLocalDescription(answer);
                 ws.send(JSON.stringify({ type: 'rtc_signal', sub: 'answer', sdp: answer }));
-
-                startLatencyMonitor();
+                startHudMonitoring();
             } else if (data.sub === 'answer' && peerConnection) {
                 await peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
             } else if (data.sub === 'ice' && peerConnection) {
