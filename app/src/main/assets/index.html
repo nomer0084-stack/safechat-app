@@ -301,7 +301,7 @@
         function connectWS(username, passHash, mode, isAuto) {
             const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
             const host = location.host || '2.56.118.10';
-            ws = new WebSocket("ws://2.56.118.10");
+            ws = new WebSocket(`${proto}//${host}`);
 
             ws.onopen = () => ws.send(JSON.stringify({ type: mode, username, passHash }));
 
